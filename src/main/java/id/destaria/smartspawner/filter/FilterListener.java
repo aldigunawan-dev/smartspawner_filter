@@ -4,12 +4,17 @@ import github.nighter.smartspawner.api.SmartSpawnerAPI;
 import github.nighter.smartspawner.api.data.SpawnerDataDTO;
 import github.nighter.smartspawner.api.events.SpawnerPlayerBreakEvent;
 import github.nighter.smartspawner.api.events.SpawnerPlaceEvent;
+import github.nighter.smartspawner.api.events.SpawnerStackEvent;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -32,12 +37,13 @@ final class FilterListener implements Listener {
     Player player = event.getPlayer();
     FilterConfiguration config = plugin.getFilterConfiguration();
     EntityType entityType = event.getEntityType();
-    if (hasEntityPermission(player, config, entityType, true)) {
+    String world = locationWorld(event.getLocation());
+    if (hasEntityPermission(player, config, entityType, world, true)) {
       return;
     }
 
     event.setCancelled(true);
-    sendMessage(player, config.getPlaceMessage(), entityPlaceholder(entityType));
+    sendMessage(player, config.getPlaceMessage(), entityPlaceholder(entityType, world));
   }
 
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -53,12 +59,13 @@ final class FilterListener implements Listener {
       }
     }
 
-    if (hasEntityPermission(player, config, entityType, false)) {
+    String world = locationWorld(event.getLocation());
+    if (hasEntityPermission(player, config, entityType, world, false)) {
       return;
     }
 
     event.setCancelled(true);
-    sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType));
+    sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType, world));
   }
 
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -83,7 +90,7 @@ final class FilterListener implements Listener {
       return;
     }
 
-    Block stateBlock = block.getState(false);
+    BlockState stateBlock = block.getState(false);
     if (!(stateBlock instanceof CreatureSpawner spawner)) {
       return;
     }
@@ -93,9 +100,10 @@ final class FilterListener implements Listener {
       return;
     }
 
-    if (!hasEntityPermission(player, config, entityType, false)) {
+    String world = block.getWorld() != null ? block.getWorld().getName() : null;
+    if (!hasEntityPermission(player, config, entityType, world, false)) {
       event.setCancelled(true);
-      sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType));
+      sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType, world));
       return;
     }
 
@@ -109,7 +117,7 @@ final class FilterListener implements Listener {
     }
 
     if (config.isNaturalDropPermissionRequired()
-        && !player.hasPermission(config.getNaturalDropPermission())) {
+        && !player.hasPermission(config.getNaturalDropPermission(entityType, world))) {
       return;
     }
 
@@ -127,7 +135,29 @@ final class FilterListener implements Listener {
     event.setExpToDrop(0);
     block.getWorld().dropItemNaturally(block.getLocation().toCenterLocation(), drop);
 
-    sendMessage(player, config.getNaturalDropMessage(), entityPlaceholder(entityType));
+    sendMessage(player, config.getNaturalDropMessage(), entityPlaceholder(entityType, world));
+  }
+
+  @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+  public void onSpawnerStack(SpawnerStackEvent event) {
+    FilterConfiguration config = plugin.getFilterConfiguration();
+    if (!config.isStackFilterEnabled()) {
+      return;
+    }
+
+    Player player = event.getPlayer();
+    if (player == null) {
+      return;
+    }
+
+    String world = locationWorld(event.getLocation());
+    String stackPermission = config.getStackPermission(world);
+    if (stackPermission != null && player.hasPermission(stackPermission)) {
+      return;
+    }
+
+    event.setCancelled(true);
+    sendMessage(player, config.getStackMessage(), worldPlaceholder(world));
   }
 
   private void sendMessage(Player player, String template, Map<String, String> replacements) {
@@ -145,16 +175,35 @@ final class FilterListener implements Listener {
     player.sendMessage(ChatColor.translateAlternateColorCodes('&', text));
   }
 
-  private boolean hasEntityPermission(
-      Player player, FilterConfiguration config, EntityType entityType, boolean forPlace) {
+  private static String locationWorld(Location location) {
+    if (location == null) {
+      return null;
+    }
+    World world = location.getWorld();
+    return world != null ? world.getName() : null;
+  }
+
+  private boolean hasEntityPermission(Player player,
+      FilterConfiguration config,
+      EntityType entityType,
+      String world,
+      boolean forPlace) {
     String permission = forPlace
-        ? config.getPlacePermission(entityType)
-        : config.getBreakPermission(entityType);
+        ? config.getPlacePermission(entityType, world)
+        : config.getBreakPermission(entityType, world);
     return permission != null && player.hasPermission(permission);
   }
 
-  private Map<String, String> entityPlaceholder(EntityType entityType) {
-    String name = entityType != null ? entityType.name() : "unknown";
-    return Map.of("%entity%", name);
+  private Map<String, String> entityPlaceholder(EntityType entityType, String worldName) {
+    Map<String, String> replacements = new HashMap<>();
+    replacements.put("%entity%", entityType != null ? entityType.name() : "unknown");
+    if (worldName != null) {
+      replacements.put("%world%", worldName);
+    }
+    return replacements;
+  }
+
+  private Map<String, String> worldPlaceholder(String worldName) {
+    return Map.of("%world%", worldName != null ? worldName : "unknown");
   }
 }

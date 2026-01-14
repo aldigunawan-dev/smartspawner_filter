@@ -9,11 +9,14 @@ authors:
   - X1Ds
 permissions:
   sff.break:
-    description: Base node; append .<entity> (e.g. sff.break.zombie) to allow per-mob breaks.
+    description: Base node; append .<world>.<entity> (e.g. sff.break.world.zombie) to allow per-mob breaks per world.
     default: op
   sff.place:
-    description: Base node; append .<entity> (e.g. sff.place.creeper) to allow per-mob placement.
+    description: Base node; append .<world>.<entity> (e.g. sff.place.world.creeper) to allow per-mob placement per world.
     default: op
   sff.natural:
-    description: Grants access to the natural silk-touch SmartSpawner drop.
+    description: Grants access to the natural silk-touch SmartSpawner drop per world and mob type.
+    default: op
+  sff.stack:
+    description: Allows stacking spawners in a world.
     default: op

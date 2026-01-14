@@ -7,7 +7,8 @@ import org.bukkit.entity.EntityType;
 final class FilterConfiguration {
   private final String placePermissionFormat;
   private final String breakPermissionFormat;
-  private final String naturalDropPermission;
+  private final String naturalDropPermissionFormat;
+  private final String stackPermissionFormat;
   private final boolean naturalDropPermissionRequired;
   private final boolean naturalSilkEnabled;
   private final int naturalSilkLevel;
@@ -15,21 +16,26 @@ final class FilterConfiguration {
   private final String placeMessage;
   private final String breakMessage;
   private final String naturalDropMessage;
+  private final String stackMessage;
+  private final boolean stackFilterEnabled;
 
-  private FilterConfiguration(
+    private FilterConfiguration(
       String placePermissionFormat,
       String breakPermissionFormat,
-      String naturalDropPermission,
+      String naturalDropPermissionFormat,
+      String stackPermissionFormat,
       boolean naturalDropPermissionRequired,
       boolean naturalSilkEnabled,
       int naturalSilkLevel,
       double naturalSilkChance,
       String placeMessage,
       String breakMessage,
-      String naturalDropMessage) {
+      String naturalDropMessage,
+      String stackMessage,
+      boolean stackFilterEnabled) {
     this.placePermissionFormat = placePermissionFormat;
     this.breakPermissionFormat = breakPermissionFormat;
-    this.naturalDropPermission = naturalDropPermission;
+    this.naturalDropPermissionFormat = naturalDropPermissionFormat;
     this.naturalDropPermissionRequired = naturalDropPermissionRequired;
     this.naturalSilkEnabled = naturalSilkEnabled;
     this.naturalSilkLevel = naturalSilkLevel;
@@ -37,6 +43,9 @@ final class FilterConfiguration {
     this.placeMessage = placeMessage;
     this.breakMessage = breakMessage;
     this.naturalDropMessage = naturalDropMessage;
+    this.stackPermissionFormat = stackPermissionFormat;
+    this.stackMessage = stackMessage;
+    this.stackFilterEnabled = stackFilterEnabled;
   }
 
   static FilterConfiguration load(FileConfiguration config) {
@@ -48,8 +57,12 @@ final class FilterConfiguration {
     if (breakPermissionFormat == null || breakPermissionFormat.isBlank()) {
       breakPermissionFormat = config.getString("permissions.break", "smartspawnerfilter.break.%entity%");
     }
-    String naturalPermission = config.getString("permissions.natural-drop", "smartspawnerfilter.natural");
-    boolean naturalPermissionRequired = config.getBoolean("natural.silk-touch.require-permission", false);
+    String naturalPermissionFormat = config.getString("permissions.natural-format");
+    if (naturalPermissionFormat == null || naturalPermissionFormat.isBlank()) {
+      naturalPermissionFormat = config.getString("permissions.natural", "smartspawnerfilter.natural.%world%.%entity%");
+    }
+    String stackPermissionFormat = config.getString("permissions.stack-format", "smartspawnerfilter.stack.%world%");
+    boolean naturalPermissionRequired = config.getBoolean("natural.silk-touch.require-permission", true);
     boolean naturalEnabled = config.getBoolean("natural.silk-touch.enabled", true);
     int silkLevel = Math.max(0, config.getInt("natural.silk-touch.level", 1));
     double chance = config.getDouble("natural.silk-touch.chance", 0.25);
@@ -64,21 +77,26 @@ final class FilterConfiguration {
     String naturalMessage = config.getString(
         "messages.natural-drop", "&aSilk Touch granted you a SmartSpawner (%entity%).");
 
+    boolean stackEnabled = config.getBoolean("stack-filter.enabled", true);
+    String stackMessage = config.getString("messages.stack", "&cStacking spawners is not allowed in this world.");
     return new FilterConfiguration(
-        placePermissionFormat,
-        breakPermissionFormat,
-        naturalPermission,
-        naturalPermissionRequired,
-        naturalEnabled,
-        silkLevel,
-        chance,
-        placeMessage,
-        breakMessage,
-        naturalMessage);
+      placePermissionFormat,
+      breakPermissionFormat,
+      naturalPermissionFormat,
+      stackPermissionFormat,
+      naturalPermissionRequired,
+      naturalEnabled,
+      silkLevel,
+      chance,
+      placeMessage,
+      breakMessage,
+      naturalMessage,
+      stackMessage,
+      stackEnabled);
   }
 
-  String getNaturalDropPermission() {
-    return naturalDropPermission;
+  String getNaturalDropPermission(EntityType entityType, String world) {
+    return formatPermission(naturalDropPermissionFormat, entityType, world);
   }
 
   boolean isNaturalDropPermissionRequired() {
@@ -109,24 +127,40 @@ final class FilterConfiguration {
     return naturalDropMessage;
   }
 
-  String getPlacePermission(EntityType entityType) {
-    return formatPermission(placePermissionFormat, entityType);
+  String getPlacePermission(EntityType entityType, String world) {
+    return formatPermission(placePermissionFormat, entityType, world);
   }
 
-  String getBreakPermission(EntityType entityType) {
-    return formatPermission(breakPermissionFormat, entityType);
+  String getBreakPermission(EntityType entityType, String world) {
+    return formatPermission(breakPermissionFormat, entityType, world);
   }
 
-  private static String formatPermission(String template, EntityType entityType) {
+  String getStackPermission(String world) {
+    return formatPermission(stackPermissionFormat, null, world);
+  }
+
+  String getStackMessage() {
+    return stackMessage;
+  }
+
+  boolean isStackFilterEnabled() {
+    return stackFilterEnabled;
+  }
+
+  private static String formatPermission(String template, EntityType entityType, String world) {
     if (template == null || template.isBlank()) {
       return null;
     }
 
-    if (entityType == null) {
-      return template;
+    String formatted = template;
+    if (entityType != null) {
+      String entityKey = entityType.name().toLowerCase(Locale.ROOT);
+      formatted = formatted.replace("%entity%", entityKey);
     }
-
-    String entityKey = entityType.name().toLowerCase(Locale.ROOT);
-    return template.replace("%entity%", entityKey);
+    if (world != null && !world.isBlank()) {
+      String worldKey = world.toLowerCase(Locale.ROOT);
+      formatted = formatted.replace("%world%", worldKey);
+    }
+    return formatted;
   }
 }

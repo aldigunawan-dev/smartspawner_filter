@@ -1,16 +1,21 @@
 permissions:
-  place-format: sff.place.%entity%
-  break-format: sff.break.%entity%
-  natural-drop: sff.natural
+  place-format: sff.place.%world%.%entity%
+  break-format: sff.break.%world%.%entity%
+  natural-format: sff.natural.%world%.%entity%
+  stack-format: sff.stack.%world%
 
 natural:
   silk-touch:
     enabled: true
     level: 1
     chance: 0.35
-    require-permission: false
+    require-permission: true
+
+stack-filter:
+  enabled: true
 
 messages:
-  break: "&cYou are not permitted to break %entity% spawner."
-  place: "&cYou are not permitted to place %entity% spawner."
-  natural-drop: "&aYou received a %entity% spawner!."
+  break: "&cYou are not permitted to break %entity% spawner in %world%."
+  place: "&cYou are not permitted to place %entity% spawner in %world%."
+  natural-drop: "&aSilk Touch rewarded you with a %entity% spawner in %world%."
+  stack: "&cStacking spawners is not permitted in %world%."

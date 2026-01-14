@@ -1,0 +1,9 @@
+target/smartspawner-filter-1.0.0.jar
+target/classes/config.yml
+target/classes/plugin.yml
+target/classes/id/destaria/smartspawner/filter/FilterConfiguration.class
+target/classes/id/destaria/smartspawner/filter/FilterListener.class
+target/classes/id/destaria/smartspawner/filter/SmartSpawnerFilterAddon.class
+target/maven-archiver/pom.properties
+target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst

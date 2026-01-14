@@ -4,9 +4,10 @@ SmartSpawner Filter injects lightweight controls around the SmartSpawner placeme
 
 ## Features
 
-- Enforces `smartspawnerfilter.break.<entity>` and `smartspawnerfilter.place.<entity>` before SmartSpawner API events are allowed to proceed.
-- Adds an optional Silk Touch-based drop for vanilla spawners with a configurable probability and permission.
-- Provides configurable feedback messages so operators can tell players why an action failed or succeeded.
+- Enforces per-world and per-mob permissions (e.g. `sff.break.world.zombie`) before SmartSpawner placement/break actions are allowed.
+- Grants natural Silk Touch drops only when players hold the matching world-aware break permission and the optional natural permission node.
+- Cancels SmartSpawner stacking attempts in worlds where the `sff.stack.%world%` node is missing while still letting other events proceed.
+- Provides configurable feedback messages that include `%player%`, `%world%`, and `%entity%` placeholders.
 
 ## Requirements
 
@@ -20,26 +21,31 @@ The defaults live in `config.yml`. Key options:
 
 ```yaml
 permissions:
-  place-format: smartspawnerfilter.place.%entity%      # append the lowercase EntityType (e.g. "zombie")
-  break-format: smartspawnerfilter.break.%entity%      # e.g. smartspawnerfilter.break.zombie
-  natural-drop: smartspawnerfilter.natural
+  place-format: sff.place.%world%.%entity%
+  break-format: sff.break.%world%.%entity%
+  natural-format: sff.natural.%world%.%entity%
+  stack-format: sff.stack.%world%
 
 natural:
   silk-touch:
-    enabled: true                     # toggle the natural drop feature
-    level: 1                          # minimum Silk Touch level needed
-    chance: 0.35                      # probability per break
-    require-permission: false         # gate the drop behind the permission above
+    enabled: true
+    level: 1
+    chance: 0.35
+    require-permission: true        # drop follows the natural-format node per world and mob
+
+stack-filter:
+  enabled: true
 
 messages:
-  break: "&cYou are not permitted to break SmartSpawner blocks."
-  place: "&cYou are not permitted to place SmartSpawner blocks."
-  natural-drop: "&aSilk Touch rewarded you with a SmartSpawner for %entity%."
+  break: "&cYou are not permitted to break %entity% spawners in %world%."
+  place: "&cYou are not permitted to place %entity% spawners in %world%."
+  natural-drop: "&aSilk Touch rewarded you with a %entity% spawner in %world%."
+  stack: "&cStacking spawners is not permitted in %world%."
 ```
 
-When the addon checks permissions it replaces `%entity%` with `EntityType.name().toLowerCase(Locale.ROOT)`, so `smartspawnerfilter.break.zombie` covers zombies and `smartspawnerfilter.place.creeper` covers creepers. You can still override the `place-format`/`break-format` templates with your own prefix (even without `%entity%`) if you prefer a flatter permission tree.
+The addon replaces `%entity%` with `EntityType.name()` and `%world%` with the world name, so nodes such as `sff.break.world.zombie` and `sff.natural.world.zombie` are required for each context. Change the `stack-format` if you want a different node layout for stacking, but the default `sff.stack.<world>` only filters the world-level interaction.
 
-You can edit the messages to include `%player%`/`%entity%` placeholders and add color codes with `&`.
+Messages can include `%player%`, `%entity%`, and `%world%` placeholders along with Bukkit color codes (`&`).
 
 ## Build & Install
 
