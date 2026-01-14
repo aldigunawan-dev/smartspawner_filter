@@ -22,6 +22,7 @@ public final class SmartSpawnerFilterAddon extends JavaPlugin {
 
     reloadFilterConfig();
     getServer().getPluginManager().registerEvents(new FilterListener(this), this);
+    registerCommands();
   }
 
   @Override
@@ -30,8 +31,14 @@ public final class SmartSpawnerFilterAddon extends JavaPlugin {
     reloadFilterConfig();
   }
 
-  private void reloadFilterConfig() {
+  void reloadFilterConfig() {
     configuration = FilterConfiguration.load(getConfig());
+  }
+
+  private void registerCommands() {
+    if (getCommand("smartspawnerfilter") != null) {
+      getCommand("smartspawnerfilter").setExecutor(new ReloadCommand(this));
+    }
   }
 
   public FilterConfiguration getFilterConfiguration() {

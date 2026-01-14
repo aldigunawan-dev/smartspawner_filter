@@ -7,6 +7,12 @@ softdepend:
   - SmartSpawner
 authors:
   - X1Ds
+commands:
+  smartspawnerfilter:
+    description: Reloads the SmartSpawner Filter configuration.
+    usage: /<command> reload
+    aliases:
+      - ssf
 permissions:
   sff.break:
     description: Base node; append .<world>.<entity> (e.g. sff.break.world.zombie) to allow per-mob breaks per world.
@@ -19,4 +25,7 @@ permissions:
     default: op
   sff.stack:
     description: Allows stacking spawners in a world.
+    default: op
+  sff.reload:
+    description: Allows reloading the addon configuration via command.
     default: op

@@ -7,3 +7,4 @@ target/classes/id/destaria/smartspawner/filter/SmartSpawnerFilterAddon.class
 target/maven-archiver/pom.properties
 target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
 target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+line_numbers.py

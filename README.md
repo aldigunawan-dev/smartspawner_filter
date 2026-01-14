@@ -47,6 +47,10 @@ The addon replaces `%entity%` with `EntityType.name()` and `%world%` with the wo
 
 Messages can include `%player%`, `%entity%`, and `%world%` placeholders along with Bukkit color codes (`&`).
 
+## Commands
+
+- `/smartspawnerfilter reload` (`/ssf reload`): reloads `config.yml` at runtime; requires the `sff.reload` permission.
+
 ## Build & Install
 
 1. Install the SmartSpawner API dependency that matches your server.
