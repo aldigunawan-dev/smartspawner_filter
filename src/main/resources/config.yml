@@ -1,0 +1,16 @@
+permissions:
+  place-format: smartspawnerfilter.place.%entity%
+  break-format: smartspawnerfilter.break.%entity%
+  natural-drop: smartspawnerfilter.natural
+
+natural:
+  silk-touch:
+    enabled: true
+    level: 1
+    chance: 0.35
+    require-permission: false
+
+messages:
+  break: "&cYou are not permitted to break SmartSpawner blocks."
+  place: "&cYou are not permitted to place SmartSpawner blocks."
+  natural-drop: "&aSilk Touch rewarded you with a SmartSpawner for %entity%."

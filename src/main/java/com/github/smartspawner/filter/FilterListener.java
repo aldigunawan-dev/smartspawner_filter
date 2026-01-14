@@ -1,0 +1,160 @@
+package com.github.smartspawner.filter;
+
+import github.nighter.smartspawner.api.SmartSpawnerAPI;
+import github.nighter.smartspawner.api.data.SpawnerDataDTO;
+import github.nighter.smartspawner.api.events.SpawnerPlayerBreakEvent;
+import github.nighter.smartspawner.api.events.SpawnerPlaceEvent;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemStack;
+
+final class FilterListener implements Listener {
+  private final SmartSpawnerFilterAddon plugin;
+
+  FilterListener(SmartSpawnerFilterAddon plugin) {
+    this.plugin = plugin;
+  }
+
+  @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+  public void onSpawnerPlace(SpawnerPlaceEvent event) {
+    Player player = event.getPlayer();
+    FilterConfiguration config = plugin.getFilterConfiguration();
+    EntityType entityType = event.getEntityType();
+    if (hasEntityPermission(player, config, entityType, true)) {
+      return;
+    }
+
+    event.setCancelled(true);
+    sendMessage(player, config.getPlaceMessage(), entityPlaceholder(entityType));
+  }
+
+  @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+  public void onSpawnerBreak(SpawnerPlayerBreakEvent event) {
+    Player player = event.getPlayer();
+    FilterConfiguration config = plugin.getFilterConfiguration();
+    SmartSpawnerAPI api = plugin.getSmartSpawnerAPI();
+    EntityType entityType = null;
+    if (api != null) {
+      SpawnerDataDTO dto = api.getSpawnerByLocation(event.getLocation());
+      if (dto != null) {
+        entityType = dto.getEntityType();
+      }
+    }
+
+    if (hasEntityPermission(player, config, entityType, false)) {
+      return;
+    }
+
+    event.setCancelled(true);
+    sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType));
+  }
+
+  @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+  public void onNaturalSpawnerBreak(BlockBreakEvent event) {
+    FilterConfiguration config = plugin.getFilterConfiguration();
+    if (!config.isNaturalSilkEnabled()) {
+      return;
+    }
+
+    Player player = event.getPlayer();
+    if (player.getGameMode() == GameMode.CREATIVE) {
+      return;
+    }
+
+    Block block = event.getBlock();
+    if (block.getType() != Material.SPAWNER) {
+      return;
+    }
+
+    SmartSpawnerAPI api = plugin.getSmartSpawnerAPI();
+    if (api != null && api.getSpawnerByLocation(block.getLocation()) != null) {
+      return;
+    }
+
+    Block stateBlock = block.getState(false);
+    if (!(stateBlock instanceof CreatureSpawner spawner)) {
+      return;
+    }
+
+    EntityType entityType = spawner.getSpawnedType();
+    if (entityType == null) {
+      return;
+    }
+
+    if (!hasEntityPermission(player, config, entityType, false)) {
+      event.setCancelled(true);
+      sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType));
+      return;
+    }
+
+    ItemStack tool = player.getInventory().getItemInMainHand();
+    if (tool == null) {
+      return;
+    }
+
+    if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < config.getNaturalSilkLevel()) {
+      return;
+    }
+
+    if (config.isNaturalDropPermissionRequired()
+        && !player.hasPermission(config.getNaturalDropPermission())) {
+      return;
+    }
+
+    double chance = config.getNaturalSilkChance();
+    if (chance <= 0 || ThreadLocalRandom.current().nextDouble() >= chance) {
+      return;
+    }
+
+    ItemStack drop = plugin.createSmartSpawnerItem(entityType);
+    if (drop == null) {
+      return;
+    }
+
+    event.setDropItems(false);
+    event.setExpToDrop(0);
+    block.getWorld().dropItemNaturally(block.getLocation().toCenterLocation(), drop);
+
+    sendMessage(player, config.getNaturalDropMessage(), entityPlaceholder(entityType));
+  }
+
+  private void sendMessage(Player player, String template, Map<String, String> replacements) {
+    if (player == null || template == null || template.isEmpty()) {
+      return;
+    }
+
+    String text = template.replace("%player%", player.getName());
+    if (replacements != null) {
+      for (Map.Entry<String, String> placeholder : replacements.entrySet()) {
+        text = text.replace(placeholder.getKey(), placeholder.getValue());
+      }
+    }
+
+    player.sendMessage(ChatColor.translateAlternateColorCodes('&', text));
+  }
+
+  private boolean hasEntityPermission(
+      Player player, FilterConfiguration config, EntityType entityType, boolean forPlace) {
+    String permission = forPlace
+        ? config.getPlacePermission(entityType)
+        : config.getBreakPermission(entityType);
+    return permission != null && player.hasPermission(permission);
+  }
+
+  private Map<String, String> entityPlaceholder(EntityType entityType) {
+    String name = entityType != null ? entityType.name() : "unknown";
+    return Map.of("%entity%", name);
+  }
+}
