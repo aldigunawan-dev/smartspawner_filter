@@ -1,4 +1,4 @@
-package com.github.smartspawner.filter;
+package id.destaria.smartspawner.filter;
 
 import github.nighter.smartspawner.api.SmartSpawnerAPI;
 import github.nighter.smartspawner.api.data.SpawnerDataDTO;

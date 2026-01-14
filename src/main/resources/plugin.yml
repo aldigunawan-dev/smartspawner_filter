@@ -1,19 +1,19 @@
 name: SmartSpawnerFilter
-main: com.github.smartspawner.filter.SmartSpawnerFilterAddon
+main: id.destaria.smartspawner.filter.SmartSpawnerFilterAddon
 version: 1.0.0
 api-version: 1.20
 description: Adds permission enforcement around SmartSpawner placement and silk-touch drops.
 softdepend:
   - SmartSpawner
 authors:
-  - GitHub Copilot
+  - X1Ds
 permissions:
-  smartspawnerfilter.break:
-    description: Base node; append .<entity> (e.g. smartspawnerfilter.break.zombie) to allow per-mob breaks.
+  sff.break:
+    description: Base node; append .<entity> (e.g. sff.break.zombie) to allow per-mob breaks.
     default: op
-  smartspawnerfilter.place:
-    description: Base node; append .<entity> (e.g. smartspawnerfilter.place.creeper) to allow per-mob placement.
+  sff.place:
+    description: Base node; append .<entity> (e.g. sff.place.creeper) to allow per-mob placement.
     default: op
-  smartspawnerfilter.natural:
+  sff.natural:
     description: Grants access to the natural silk-touch SmartSpawner drop.
     default: op

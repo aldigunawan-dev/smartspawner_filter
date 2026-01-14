@@ -1,7 +1,7 @@
 permissions:
-  place-format: smartspawnerfilter.place.%entity%
-  break-format: smartspawnerfilter.break.%entity%
-  natural-drop: smartspawnerfilter.natural
+  place-format: sff.place.%entity%
+  break-format: sff.break.%entity%
+  natural-drop: sff.natural
 
 natural:
   silk-touch:
@@ -11,6 +11,6 @@ natural:
     require-permission: false
 
 messages:
-  break: "&cYou are not permitted to break SmartSpawner blocks."
-  place: "&cYou are not permitted to place SmartSpawner blocks."
-  natural-drop: "&aSilk Touch rewarded you with a SmartSpawner for %entity%."
+  break: "&cYou are not permitted to break %entity% spawner."
+  place: "&cYou are not permitted to place %entity% spawner."
+  natural-drop: "&aYou received a %entity% spawner!."

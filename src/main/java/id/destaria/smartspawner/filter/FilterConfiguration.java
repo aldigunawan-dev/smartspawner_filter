@@ -1,4 +1,4 @@
-package com.github.smartspawner.filter;
+package id.destaria.smartspawner.filter;
 
 import java.util.Locale;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -75,14 +75,6 @@ final class FilterConfiguration {
         placeMessage,
         breakMessage,
         naturalMessage);
-  }
-
-  String getPlacePermission() {
-    return placePermission;
-  }
-
-  String getBreakPermission() {
-    return breakPermission;
   }
 
   String getNaturalDropPermission() {
