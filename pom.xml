@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>id.destaria</groupId>
   <artifactId>smartspawner-filter</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.2</version>
   <name>SmartSpawner Filter</name>
   <description>Addon for SmartSpawner that gates break/place actions and grants silk-touch drops.</description>
 

@@ -8,23 +8,13 @@ import github.nighter.smartspawner.api.events.SpawnerStackEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.CreatureSpawner;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.*;
+import org.bukkit.block.*;
+import org.bukkit.entity.*;
+import org.bukkit.event.*;
+import org.bukkit.event.block.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.NamespacedKey;
@@ -32,7 +22,6 @@ import org.bukkit.NamespacedKey;
 final class FilterListener implements Listener {
   private final SmartSpawnerFilterAddon plugin;
 
-  // Key for storing entity type in spawner item
   private final NamespacedKey entityTypeKey;
 
   FilterListener(SmartSpawnerFilterAddon plugin) {
@@ -45,42 +34,33 @@ final class FilterListener implements Listener {
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
   public void onSpawnerPlace(SpawnerPlaceEvent event) {
     Player player = event.getPlayer();
+    if (player == null) return;
     FilterConfiguration config = plugin.getFilterConfiguration();
-    EntityType entityType = event.getEntityType();
-    if (entityType == null) {
-      entityType = EntityType.PIG;
-    }
+    EntityType entityType = event.getEntityType() != null ? event.getEntityType() : EntityType.PIG;
     String world = locationWorld(event.getLocation());
-    if (hasEntityPermission(player, config, entityType, world, true)) {
-      return;
+    if (!hasEntityPermission(player, config, entityType, world, true)) {
+      event.setCancelled(true);
+      sendMessage(player, config.getPlaceMessage(), entityPlaceholder(entityType, world));
     }
-    event.setCancelled(true);
-    sendMessage(player, config.getPlaceMessage(), entityPlaceholder(entityType, world));
   }
 
   // Handler for vanilla spawner placement (natural)
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
   public void onNaturalSpawnerPlace(BlockPlaceEvent event) {
     Block block = event.getBlockPlaced();
-    if (block.getType() != Material.SPAWNER) {
-      return;
-    }
+    if (block == null || block.getType() != Material.SPAWNER) return;
     Player player = event.getPlayer();
+    if (player == null) return;
     ItemStack item = event.getItemInHand();
-    EntityType entityType = null;
+    EntityType entityType = EntityType.PIG;
     if (item != null && item.hasItemMeta()) {
       PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
       String entityTypeName = pdc.get(entityTypeKey, PersistentDataType.STRING);
       if (entityTypeName != null) {
         try {
           entityType = EntityType.valueOf(entityTypeName);
-        } catch (IllegalArgumentException ex) {
-          // fallback below
-        }
+        } catch (IllegalArgumentException ignored) {}
       }
-    }
-    if (entityType == null) {
-      entityType = EntityType.PIG;
     }
     FilterConfiguration config = plugin.getFilterConfiguration();
     String world = block.getWorld() != null ? block.getWorld().getName() : null;
@@ -89,7 +69,6 @@ final class FilterListener implements Listener {
       sendMessage(player, config.getPlaceMessage(), entityPlaceholder(entityType, world));
       return;
     }
-    // Set spawned type on the placed spawner
     BlockState state = block.getState();
     if (state instanceof CreatureSpawner spawner) {
       spawner.setSpawnedType(entityType);
@@ -100,11 +79,11 @@ final class FilterListener implements Listener {
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
   public void onSpawnerBreak(SpawnerPlayerBreakEvent event) {
     Player player = event.getPlayer();
+    if (player == null) return;
     FilterConfiguration config = plugin.getFilterConfiguration();
     SmartSpawnerAPI api = plugin.getSmartSpawnerAPI();
     EntityType entityType = null;
     Location spawnerLocation = null;
-    // Prefer block location if available
     try {
       Location loc = event.getLocation();
       if (loc != null && loc.getWorld() != null) {
@@ -113,9 +92,7 @@ final class FilterListener implements Listener {
           spawnerLocation = block.getLocation();
         }
       }
-    } catch (Throwable t) {
-      // fallback to event.getLocation()
-    }
+    } catch (Throwable ignored) {}
     if (spawnerLocation == null) {
       spawnerLocation = event.getLocation();
     }
@@ -124,7 +101,6 @@ final class FilterListener implements Listener {
       if (dto != null) {
         entityType = dto.getEntityType();
       } else {
-        // Coba ambil entity type dari block state spawner vanilla
         Block block = spawnerLocation.getWorld().getBlockAt(spawnerLocation);
         BlockState state = block.getState(true);
         if (state instanceof CreatureSpawner spawner) {
@@ -132,79 +108,44 @@ final class FilterListener implements Listener {
         }
       }
     }
+    if (entityType == null) {
+      entityType = EntityType.PIG;
+    }
     String world = locationWorld(spawnerLocation);
     if (!hasEntityPermission(player, config, entityType, world, false)) {
       event.setCancelled(true);
       sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType, world));
-      return;
     }
   }
 
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
   public void onNaturalSpawnerBreak(BlockBreakEvent event) {
     FilterConfiguration config = plugin.getFilterConfiguration();
-    if (!config.isNaturalSilkEnabled()) {
-      return;
-    }
-
+    if (!config.isNaturalSilkEnabled()) return;
     Player player = event.getPlayer();
-    if (player.getGameMode() == GameMode.CREATIVE) {
-      return;
-    }
-
+    if (player == null || player.getGameMode() == GameMode.CREATIVE) return;
     Block block = event.getBlock();
-    if (block.getType() != Material.SPAWNER) {
-      return;
-    }
-
+    if (block == null || block.getType() != Material.SPAWNER) return;
     SmartSpawnerAPI api = plugin.getSmartSpawnerAPI();
-    if (api != null && api.getSpawnerByLocation(block.getLocation()) != null) {
-      return;
-    }
-
-    BlockState stateBlock = block.getState(true); // force update
-    if (!(stateBlock instanceof CreatureSpawner spawner)) {
-      return;
-    }
-
+    if (api != null && api.getSpawnerByLocation(block.getLocation()) != null) return;
+    BlockState stateBlock = block.getState(true);
+    if (!(stateBlock instanceof CreatureSpawner spawner)) return;
     EntityType entityType = spawner.getSpawnedType();
-    if (entityType == null) {
-      entityType = EntityType.PIG; // fallback default vanilla
-      // Optional: debug log
-      plugin.getLogger().warning("Spawner entity type not detected, fallback to PIG at " + block.getLocation());
-    }
-
+    if (entityType == null) entityType = EntityType.PIG;
     String world = block.getWorld() != null ? block.getWorld().getName() : null;
     if (!hasEntityPermission(player, config, entityType, world, false)) {
       event.setCancelled(true);
       sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType, world));
       return;
     }
-
     ItemStack tool = player.getInventory().getItemInMainHand();
-    if (tool == null) {
-      return;
-    }
-
-    if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < config.getNaturalSilkLevel()) {
-      return;
-    }
-
-    if (config.isNaturalDropPermissionRequired()
-        && !player.hasPermission(config.getNaturalDropPermission(entityType, world))) {
-      return;
-    }
-
+    if (tool == null) return;
+    if (tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < config.getNaturalSilkLevel()) return;
+    if (config.isNaturalDropPermissionRequired() && !player.hasPermission(config.getNaturalDropPermission(entityType, world))) return;
     double chance = config.getNaturalSilkChance();
-    if (chance <= 0 || ThreadLocalRandom.current().nextDouble() >= chance) {
-      return;
-    }
-
-    // Buat item spawner dan simpan entity type ke PDC
+    if (chance <= 0 || ThreadLocalRandom.current().nextDouble() >= chance) return;
     ItemStack drop = plugin.createSmartSpawnerItem(entityType);
-    if (drop == null) {
-      return;
-    }
+    if (drop == null) return;
     if (drop.hasItemMeta()) {
       var meta = drop.getItemMeta();
       meta.getPersistentDataContainer().set(entityTypeKey, PersistentDataType.STRING, entityType.name());
@@ -238,28 +179,20 @@ final class FilterListener implements Listener {
     sendMessage(player, config.getStackMessage(), worldPlaceholder(world));
   }
 
-  @SuppressWarnings("deprecation")
   private void sendMessage(Player player, String template, Map<String, String> replacements) {
-    if (player == null || template == null || template.isEmpty()) {
-      return;
-    }
-
+    if (player == null || template == null || template.isEmpty()) return;
     String text = template.replace("%player%", player.getName());
     if (replacements != null) {
       for (Map.Entry<String, String> placeholder : replacements.entrySet()) {
         text = text.replace(placeholder.getKey(), placeholder.getValue());
       }
     }
-
     player.sendMessage(ChatColor.translateAlternateColorCodes('&', text));
   }
 
   private static String locationWorld(Location location) {
-    if (location == null) {
-      return null;
-    }
-    World world = location.getWorld();
-    return world != null ? world.getName() : null;
+    if (location == null || location.getWorld() == null) return null;
+    return location.getWorld().getName();
   }
 
   private boolean hasEntityPermission(Player player,
@@ -267,6 +200,7 @@ final class FilterListener implements Listener {
       EntityType entityType,
       String world,
       boolean forPlace) {
+    if (player == null || config == null || entityType == null || world == null) return false;
     String permission = forPlace
         ? config.getPlacePermission(entityType, world)
         : config.getBreakPermission(entityType, world);
@@ -275,10 +209,8 @@ final class FilterListener implements Listener {
 
   private Map<String, String> entityPlaceholder(EntityType entityType, String worldName) {
     Map<String, String> replacements = new HashMap<>();
-    replacements.put("%entity%", entityType != null ? entityType.name() : "unknown");
-    if (worldName != null) {
-      replacements.put("%world%", worldName);
-    }
+    replacements.put("%entity%", entityType != null ? entityType.name() : "PIG");
+    replacements.put("%world%", worldName != null ? worldName : "unknown");
     return replacements;
   }
 
