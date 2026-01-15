@@ -1,8 +1,8 @@
 permissions:
-  place-format: sff.place.%world%.%entity%
-  break-format: sff.break.%world%.%entity%
-  natural-format: sff.natural.%world%.%entity%
-  stack-format: sff.stack.%world%
+  place-format: ssf.place.%world%.%entity%
+  break-format: ssf.break.%world%.%entity%
+  natural-format: ssf.natural.%world%.%entity%
+  stack-format: ssf.stack.%world%
 
 natural:
   silk-touch:

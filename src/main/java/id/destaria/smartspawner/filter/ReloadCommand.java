@@ -1,6 +1,6 @@
 package id.destaria.smartspawner.filter;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,17 +15,17 @@ final class ReloadCommand implements CommandExecutor {
   @Override
   public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
     if (args.length != 1 || !"reload".equalsIgnoreCase(args[0])) {
-      sender.sendMessage(ChatColor.YELLOW + "Usage: /" + label + " reload");
+      sender.sendMessage(Component.text("Usage: /" + label + " reload").color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
       return true;
     }
 
     if (!sender.hasPermission("sff.reload")) {
-      sender.sendMessage(ChatColor.RED + "You do not have permission to reload SmartSpawner Filter.");
+      sender.sendMessage(Component.text("You do not have permission to reload SmartSpawner Filter.").color(net.kyori.adventure.text.format.NamedTextColor.RED));
       return true;
     }
 
     plugin.reloadConfig();
-    sender.sendMessage(ChatColor.GREEN + "SmartSpawner Filter configuration reloaded.");
+    sender.sendMessage(Component.text("SmartSpawner Filter configuration reloaded.").color(net.kyori.adventure.text.format.NamedTextColor.GREEN));
     return true;
   }
 }
