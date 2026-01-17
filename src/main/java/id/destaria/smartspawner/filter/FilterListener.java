@@ -50,7 +50,12 @@ final class FilterListener implements Listener {
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
   public void onSpawnerBreak(SpawnerPlayerBreakEvent event) {
     Player player = event.getPlayer();
-    if (player == null) return;
+        
+    //Bypass if in creative mode
+    if (player == null || player.getGameMode() == GameMode.CREATIVE) {
+      return;
+    }
+    
     FilterConfiguration config = plugin.getFilterConfiguration();
     SmartSpawnerAPI api = plugin.getSmartSpawnerAPI();
     EntityType entityType = null;
@@ -73,19 +78,7 @@ final class FilterListener implements Listener {
       entityType = EntityType.PIG;
     }
     String world = locationWorld(spawnerLocation);
-    
-    //Bypass if in creative mode
-    if (player.getGameMode() == GameMode.CREATIVE) {
-      return;
-    }
 
-    ItemStack tool = player.getInventory().getItemInMainHand();
-    if (tool == null || tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < config.getNaturalSilkLevel()) {
-      // Destroy spawner without drop and without message
-      event.setCancelled(true);
-      destroySpawnerBlock(spawnerLocation);
-      return;
-    }
     if (isSmartSpawner) {
       if (!hasEntityPermission(player, config, entityType, world, false)) {
         event.setCancelled(true);
