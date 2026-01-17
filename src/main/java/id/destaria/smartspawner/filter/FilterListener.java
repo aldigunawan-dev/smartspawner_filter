@@ -23,18 +23,15 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.NamespacedKey;
 
 final class FilterListener implements Listener {
   private final SmartSpawnerFilterAddon plugin;
-  private final NamespacedKey entityTypeKey;
+  // Removed unused entityTypeKey
 
   FilterListener(SmartSpawnerFilterAddon plugin) {
     this.plugin = plugin;
-    this.entityTypeKey = new NamespacedKey(plugin, "spawner_entity_type");
+    // Removed unused entityTypeKey initialization
   }
-
-
 
   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
   public void onSpawnerPlace(SpawnerPlaceEvent event) {
@@ -84,8 +81,9 @@ final class FilterListener implements Listener {
 
     ItemStack tool = player.getInventory().getItemInMainHand();
     if (tool == null || tool.getEnchantmentLevel(Enchantment.SILK_TOUCH) < config.getNaturalSilkLevel()) {
+      // Destroy spawner without drop and without message
       event.setCancelled(true);
-      sendMessage(player, config.getBreakMessage(), entityPlaceholder(entityType, world));
+      destroySpawnerBlock(spawnerLocation);
       return;
     }
     if (isSmartSpawner) {
@@ -106,10 +104,7 @@ final class FilterListener implements Listener {
       double chance = config.getNaturalSilkChance();
       if (chance <= 0 || ThreadLocalRandom.current().nextDouble() >= chance) {
         event.setCancelled(true);
-        if (spawnerLocation != null && spawnerLocation.getWorld() != null) {
-          Block block = spawnerLocation.getWorld().getBlockAt(spawnerLocation);
-          block.setType(Material.AIR);
-        }
+        destroySpawnerBlock(spawnerLocation);
         return;
       }
     }
@@ -139,6 +134,16 @@ final class FilterListener implements Listener {
       }
     }
     player.sendMessage(MiniMessage.miniMessage().deserialize(text));
+  }
+
+  /**
+   * Destroy the spawner block at the given location (set to AIR).
+   */
+  private void destroySpawnerBlock(Location location) {
+    if (location != null && location.getWorld() != null) {
+      Block block = location.getWorld().getBlockAt(location);
+      block.setType(Material.AIR);
+    }
   }
 
   private static String locationWorld(Location location) {
