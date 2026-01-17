@@ -8,3 +8,4 @@ target/maven-archiver/pom.properties
 target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
 target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
 line_numbers.py
+target/smartspawner-filter-1.0.2.jar

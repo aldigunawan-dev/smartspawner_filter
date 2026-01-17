@@ -19,20 +19,20 @@ final class FilterConfiguration {
   private final String stackMessage;
   private final boolean stackFilterEnabled;
 
-    private FilterConfiguration(
-      String placePermissionFormat,
-      String breakPermissionFormat,
-      String naturalDropPermissionFormat,
-      String stackPermissionFormat,
-      boolean naturalDropPermissionRequired,
-      boolean naturalSilkEnabled,
-      int naturalSilkLevel,
-      double naturalSilkChance,
-      String placeMessage,
-      String breakMessage,
-      String naturalDropMessage,
-      String stackMessage,
-      boolean stackFilterEnabled) {
+  private FilterConfiguration(
+    String placePermissionFormat,
+    String breakPermissionFormat,
+    String naturalDropPermissionFormat,
+    String stackPermissionFormat,
+    boolean naturalDropPermissionRequired,
+    boolean naturalSilkEnabled,
+    int naturalSilkLevel,
+    double naturalSilkChance,
+    String placeMessage,
+    String breakMessage,
+    String naturalDropMessage,
+    String stackMessage,
+    boolean stackFilterEnabled) {
     this.placePermissionFormat = placePermissionFormat;
     this.breakPermissionFormat = breakPermissionFormat;
     this.naturalDropPermissionFormat = naturalDropPermissionFormat;
@@ -49,34 +49,19 @@ final class FilterConfiguration {
   }
 
   static FilterConfiguration load(FileConfiguration config) {
-    String placePermissionFormat = config.getString("permissions.place-format");
-    if (placePermissionFormat == null || placePermissionFormat.isBlank()) {
-      placePermissionFormat = config.getString("permissions.place", "smartspawnerfilter.place.%entity%");
-    }
-    String breakPermissionFormat = config.getString("permissions.break-format");
-    if (breakPermissionFormat == null || breakPermissionFormat.isBlank()) {
-      breakPermissionFormat = config.getString("permissions.break", "smartspawnerfilter.break.%entity%");
-    }
-    String naturalPermissionFormat = config.getString("permissions.natural-format");
-    if (naturalPermissionFormat == null || naturalPermissionFormat.isBlank()) {
-      naturalPermissionFormat = config.getString("permissions.natural", "smartspawnerfilter.natural.%world%.%entity%");
-    }
+    String placePermissionFormat = config.getString("permissions.place-format", "smartspawnerfilter.place.%entity%");
+    String breakPermissionFormat = config.getString("permissions.break-format", "smartspawnerfilter.break.%entity%");
+    String naturalPermissionFormat = config.getString("permissions.natural-format", "smartspawnerfilter.natural.%world%.%entity%");
     String stackPermissionFormat = config.getString("permissions.stack-format", "smartspawnerfilter.stack.%world%");
     boolean naturalPermissionRequired = config.getBoolean("natural.silk-touch.require-permission", true);
     boolean naturalEnabled = config.getBoolean("natural.silk-touch.enabled", true);
     int silkLevel = Math.max(0, config.getInt("natural.silk-touch.level", 1));
     double chance = config.getDouble("natural.silk-touch.chance", 0.25);
-    if (chance < 0) {
-      chance = 0;
-    } else if (chance > 1) {
-      chance = 1;
-    }
-
+    if (chance < 0) chance = 0;
+    if (chance > 1) chance = 1;
     String placeMessage = config.getString("messages.place", "&cYou cannot place spawners here.");
     String breakMessage = config.getString("messages.break", "&cYou cannot break spawners here.");
-    String naturalMessage = config.getString(
-        "messages.natural-drop", "&aSilk Touch granted you a SmartSpawner (%entity%).");
-
+    String naturalMessage = config.getString("messages.natural-drop", "&aSilk Touch granted you a SmartSpawner (%entity%).");
     boolean stackEnabled = config.getBoolean("stack-filter.enabled", true);
     String stackMessage = config.getString("messages.stack", "&cStacking spawners is not allowed in this world.");
     return new FilterConfiguration(
